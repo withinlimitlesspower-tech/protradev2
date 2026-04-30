@@ -1,0 +1,54 @@
+# AI Crypto Trading Dashboard - Python Dependencies
+# Backend: Flask REST API with SQLite database
+# Frontend: Tailwind CSS with glassmorphic dark UI
+# Features: Live signal tracking, interactive chat, voice support
+
+# Core Web Framework
+Flask==3.0.0
+# Lightweight WSGI web application framework
+# Provides routing, request handling, and template rendering
+
+# Database ORM and Management
+Flask-SQLAlchemy==3.1.1
+# SQLAlchemy integration for Flask
+# Handles database models, migrations, and queries
+# Used for signal accuracy tracking and user data
+
+# Cross-Origin Resource Sharing
+Flask-CORS==4.0.0
+# Enables CORS for frontend-backend communication
+# Required for live signal updates and chat functionality
+
+# Environment Variable Management
+python-dotenv==1.0.0
+# Loads configuration from .env file
+# Securely manages API keys and sensitive settings
+
+# Audio/Voice Processing
+pydub==0.25.1
+# Audio file manipulation and processing
+# Supports voice commands and audio feedback in chat
+
+# WSGI Utilities and Security
+Werkzeug==3.0.1
+# WSGI toolkit with security features
+# Provides password hashing, secure cookies, and debugging
+
+# Additional Dependencies (Optional but Recommended)
+# Uncomment as needed for production deployment
+
+# gunicorn==21.2.0
+# Production WSGI server for deployment
+
+# psycopg2-binary==2.9.9
+# PostgreSQL adapter if migrating from SQLite
+
+# redis==5.0.1
+# Caching and real-time updates for live signals
+
+# flask-socketio==5.3.6
+# WebSocket support for real-time chat and signals
+
+# Version Constraints
+# All versions are pinned for reproducibility
+# Tested with Python 3.11+
