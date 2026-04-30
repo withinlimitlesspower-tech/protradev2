@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Crypto Trading Dashboard</title>
+    <!-- Tailwind CSS via CDN with base styles -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts: Inter for modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Glassmorphic dark theme base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0b0e14; /* deep dark background */
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(20, 25, 35, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .glass-light {
+            background: rgba(30, 40, 55, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Sidebar styling */
+        .sidebar {
+            width: 280px;
+            min-height: 100vh;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 50;
+            overflow-y: auto;
+        }
+        .sidebar.closed {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        /* Main content area */
+        .main-content {
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+        }
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        /* Chat container */
+        .chat-container {
+            height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            scroll-behavior: smooth;
+        }
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 20px;
+        }
+        /* Message bubble */
+        .message-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1.2rem;
+            margin-bottom: 0.75rem;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        .message-bubble.user {
+            background: #2b6cb0;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.3rem;
+        }
+        .message-bubble.assistant {
+            background: rgba(45, 55, 72, 0.7);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            align-self: flex-start;
+            border-bottom-left-radius: 0.3rem;
+        }
+        /* Typing indicator */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.5rem 1rem;
+            background: rgba(45, 55, 72, 0.5);
+            border-radius: 1rem;
+            margin-bottom: 0.75rem;
+            align-self: flex-start;
+        }
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #a0aec0;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+            30% { opacity: 1; transform: scale(1.2); }
+        }
+        /* Signal status badge */
+        .signal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .signal-badge.live {
+            background: rgba(72, 187, 120, 0.2);
+            color: #68d391;
+            border: 1px solid rgba(72, 187, 120, 0.3);
+        }
+        .signal-badge.pending {
+            background: rgba(237, 137, 54, 0.2);
+            color: #f6ad55;
+            border: 1px solid rgba(237, 137, 54, 0.3);
+        }
+        .signal-badge.error {
+            background: rgba(245, 101, 101, 0.2);
+            color: #fc8181;
+            border: 1px solid rgba(245, 101, 101, 0.3);
+        }
+        /* Pulse animation for live indicator */
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #68d391;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(104, 211, 145, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(104, 211, 145, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(104, 211, 145, 0); }
+        }
+        /* Responsive hamburger */
+        .hamburger {
+            display: none;
+            background: rgba(30, 40, 55, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            z-index: 60;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+        }
+        .hamburger:hover {
+            background: rgba(50, 60, 80, 0.8);
+        }
+        .hamburger i {
+            font-size: 1.25rem;
+            color: #e2e8f0;
+        }
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+        }
+        .sidebar-overlay.active {
+            display: block;
+        }
+        /* Responsive breakpoints */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                opacity: 0;
+                pointer-events: none;
+                width: 280px;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+            .hamburger {
+                display: block;
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
+            .chat-container {
+                height: calc(100vh - 100px);
+            }
+        }
+        @media (min-width: 769px) {
+            .sidebar.closed {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .hamburger {
+                display: none !important;
+            }
+            .sidebar-overlay {
+                display: none !important;
+            }
+        }
+        /* Smooth scroll for chat */
+        .smooth-scroll {
+            scroll-behavior: smooth;
+        }
+        /* Input styling */
+        .chat-input {
+            background: rgba(30, 40, 55, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+            padding: 0.75rem 1.25rem;
+            color: #e2e8f0;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .chat-input:focus {
+            border-color: #4a9eff;
+        }
+        .chat-input::placeholder {
+            color: #718096;
+        }
+        /* Signal card glassmorphism */
+        .signal-card {
+            background: rgba(20, 28, 40, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 1rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .signal-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        /* Scrollbar for sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 3px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Hamburger button (visible only on mobile) -->
+    <button id="hamburgerBtn" class="hamburger" aria-label="Toggle sidebar" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar overlay for mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar glass flex flex-col p-4" role="navigation" aria-label="Main navigation">
+        <!-- Logo / Brand -->
+        <div class="flex items-center gap-3 mb-6 px-2">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <i class="fas fa-robot text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-tight">CryptoAI</h1>
+                <p class="text-xs text-gray-400">Trading Dashboard</p>
+            </div>
+        </div>
+
+        <!-- Live Signal Status -->
+        <div class="mb-6 px-2">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-300">Signal Status</span>
+                <span class="signal-badge live">
+                    <span class="pulse-dot"></span> Live
+                </span>
+            </div>
+            <div class="space-y-2">
+                <div class="signal-card flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fab fa-bitcoin text-yellow-400"></i>
+                        <span class="text-sm font-medium">BTC/USD</span>
+                    </div>
+                    <span class="text-xs text-green-400 font-semibold">BUY</span>
+                </div>
+                <div class="signal-card flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fab fa-ethereum text-purple-400"></i>
+                        <span class="text-sm font-medium">ETH/USD</span>
+                    </div>
+                    <span class="text-xs text-yellow-400 font-semibold">HOLD</span>
+                </div>
+                <div class="signal-card flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-coins text-blue-400"></i>
+                        <span class="text-sm font-medium">SOL/USD</span>
+                    </div>
+                    <span class="text-xs text-red-400 font-semibold">SELL</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accuracy Stats (placeholder) -->
+        <div class="px-2 mb-6">
+            <h2 class="text-xs uppercase tracking-wider text-gray-500 mb-2">Signal Accuracy</h2>
+            <div class="glass-light rounded-xl p-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-300">Last 24h</span>
+                    <span class="text-sm font-bold text-green-400">87%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                    <div class="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full" style="width: 87%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation links -->
+        <nav class="flex-1 px-2 space-y-1">
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                <i class="fas fa-chart-line w-5"></i> Dashboard
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                <i class="fas fa-exchange-alt w-5"></i> Trades
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                <i class="fas fa-robot w-5"></i> AI Signals
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                <i class="fas fa-history w-5"></i> History
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition">
+                <i class="fas fa-cog w-5"></i> Settings
+            </a>
+        </nav>
+
+        <!-- User profile / logout -->
+        <div class="border-t border-white/10 pt-4 px-2 mt-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs font-bold">JD</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate">TraderJoe</p>
+                    <p class="text-xs text-gray-400 truncate">joe@crypto.ai</p>
+                </div>
+                <button class="text-gray-400 hover:text-white transition" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="mainContent" class="main-content p-4 md:p-6 lg:p-8">
+        <!-- Header with signal indicators -->
+        <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Trading Signals</h2>
+                <p class="text-sm text-gray-400 mt-1">Live AI-powered market analysis</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="signal-badge live">
+                    <span class="pulse-dot"></span> System Online
+                </span>
+                <span class="signal-badge pending">
+                    <i class="fas fa-sync-alt fa-spin"></i> Syncing
+                </span>
+            </div>
+        </header>
+
+        <!-- Chat Interface -->
+        <section class="glass rounded-2xl overflow-hidden" aria-label="AI Chat Interface">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-robot text-blue-400"></i>
+                    <span class="font-semibold text-white">AI Trading Assistant</span>
+                </div>
+                <span class="text-xs text-gray-400 flex items-center gap-1">
+                    <i class="fas fa-circle text-green-400 text-[8px]"></i> Online
+                </span>
+            </div>
+
+            <!-- Chat messages container -->
+            <div id="chatContainer" class="chat-container">
+                <div id="chatMessages" class="chat-messages flex flex-col">
+                    <!-- Welcome message -->
+                    <div class="message-bubble assistant">
+                        <p class="text-sm">👋 Hello! I'm your AI trading assistant. Ask me about market trends, signals, or trading strategies.</p>
+                    </div>
+                    <!-- Example user message -->
+                    <div class="message-bubble user">
+                        <p class="text-sm">What's the current BTC signal?</p>
+                    </div>
+                    <!-- Example assistant response -->
+                    <div class="message-bubble assistant">
+                        <p class="text-sm">Based on my analysis, BTC/USD shows a <strong class="text-green-400">BUY</strong> signal with 87% confidence. Momentum is bullish with strong volume support.</p>
+                    </div>
+                    <!-- Typing indicator (hidden by default, shown via JS) -->
+                    <div id="typingIndicator" class="typing-indicator" style="display: none;">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+
+                <!-- Chat input area -->
+                <div class="p-3 border-t border-white/10">
+                    <form id="chatForm" class="flex items-center gap-2" autocomplete="off">
+                        <input 
+                            type="text" 
+                            id="chatInput" 
+                            class="chat-input flex-1 text-sm" 
+                            placeholder="Ask about signals, markets, or strategies..." 
+                            aria-label="Chat message input"
+                            required
+                        >
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 transition text-white rounded-full w-10 h-10 flex items-center justify-center" aria-label="Send message">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- JavaScript for interactivity -->
+    <script>
+        (function() {
+            'use strict';
+
+            // DOM elements
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const chatMessages = document.getElementById('chatMessages');
+            const chatForm = document.getElementById('chatForm');
+            const chatInput = document.getElementById('chatInput');
+            const typingIndicator = document.getElementById('typingIndicator');
+
+            // State
+            let isSidebarOpen = window.innerWidth > 768; // open by default on desktop
+            let isMobile = window.innerWidth <= 768;
+
+            // Initialize sidebar state
+            function updateSidebar() {
+                if (isMobile) {
+                    // On mobile, sidebar is hidden by default; toggle via hamburger
+                    if (isSidebarOpen) {
+                        sidebar.classList.add('open');
+                        sidebar.classList.remove('closed');
+                        sidebarOverlay.classList.add('active');
+                        hamburgerBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        sidebar.classList.remove('open');
+                        sidebar.classList.add('closed');
+                        sidebarOverlay.classList.remove('active');
+                        hamburgerBtn.setAttribute('aria-expanded', 'false');
+                    }
+                } else {
+                    // Desktop: always open, no overlay
+                    sidebar.classList.add('open');
+                    sidebar.classList.remove('closed');
+                    sidebarOverlay.classList.remove('active');
+                    hamburgerBtn.setAttribute('aria-expanded', 'true');
+                }
+            }
+
+            // Toggle sidebar
+            function toggleSidebar() {
+                isSidebarOpen = !isSidebarOpen;
+                updateSidebar();
+            }
+
+            // Close sidebar (mobile)
+            function closeSidebar() {
+                if (isMobile) {
+                    isSidebarOpen = false;
+                    updateSidebar();
+                }
+            }
+
+            // Handle resize
+            function handleResize() {
+                const wasMobile = isMobile;
+                isMobile = window.innerWidth <= 768;
+                if (isMobile !== wasMobile) {
+                    // Reset state on breakpoint change
+                    if (isMobile) {
+                        isSidebarOpen = false;
+                    } else {
+                        isSidebarOpen = true;
+                    }
+                    updateSidebar();
+                }
+                // Ensure sidebar state is correct
+                updateSidebar();
+            }
+
+            // Add message to chat
+            function addMessage(text, sender = 'user') {
+                const bubble = document.createElement('div');
+                bubble.className = `message-bubble ${sender}`;
+                // Basic sanitization: escape HTML to prevent XSS
+                const sanitized = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                bubble.innerHTML = `<p class="text-sm">${sanitized}</p>`;
+                chatMessages.appendChild(bubble);
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // Simulate assistant response with typing animation
+            function simulateAssistantResponse(userMessage) {
+                // Show typing indicator
+                typingIndicator.style.display = 'flex';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Generate a contextual response based on user input (simulated)
+                const lowerMsg = userMessage.toLowerCase();
+                let responseText = '';
+                if (lowerMsg.includes('btc') || lowerMsg.includes('bitcoin')) {
+                    responseText = 'Bitcoin (BTC/USD) is currently showing a <strong class="text-green-400">BUY</strong> signal with 87% confidence. Price action suggests bullish momentum with resistance at $68,200.';
+                } else if (lowerMsg.includes('eth') || lowerMsg.includes('ethereum')) {
+                    responseText = 'Ethereum (ETH/USD) is in a <strong class="text-yellow-400">HOLD</strong> zone. Consolidation pattern detected. Waiting for breakout above $3,450 for a clear signal.';
+                } else if (lowerMsg.includes('sol') || lowerMsg.includes('solana')) {
+                    responseText = 'Solana (SOL/USD) shows a <strong class="text-red-400">SELL</strong> signal. Bearish divergence on RSI. Consider taking profits or setting stop-loss.';
+                } else if (lowerMsg.includes('market') || lowerMsg.includes('trend')) {
+                    responseText = 'Overall market sentiment is <strong class="text-green-400">bullish</strong> with a few altcoins showing weakness. BTC dominance is rising. Stay cautious on leverage.';
+                } else if (lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
+                    responseText = 'Hello! 👋 Ready to analyze the markets. Ask me about any crypto pair or trading strategy.';
+                } else {
+                    responseText = 'Interesting query! I\'m analyzing the data... Based on my models, the outlook is cautiously optimistic. Always do your own research. 📊';
+                }
+
+                // Simulate network delay (1.2-2.0 seconds)
+                const delay = 1200 + Math.random() * 800;
+                setTimeout(() => {
+                    // Hide typing indicator
+                    typingIndicator.style.display = 'none';
+                    // Add assistant response
+                    addMessage(responseText, 'assistant');
+                }, delay);
+            }
+
+            // Handle form submission
+            function handleChatSubmit(e) {
+                e.preventDefault();
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                // Add user message
+                addMessage(message, 'user');
+                // Clear input
+                chatInput.value = '';
+                // Simulate assistant response
+                simulateAssistantResponse(message);
+            }
+
+            // Event listeners
+            hamburgerBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+            chatForm.addEventListener('submit', handleChatSubmit);
+
+            // Handle window resize
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(handleResize, 200);
+            });
+
+            // Initial setup
+            handleResize();
+
+            // Optional: Auto-focus input on load
+            chatInput.focus();
+
+            // Handle escape key to close sidebar on mobile
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && isMobile && isSidebarOpen) {
+                    closeSidebar();
+                }
+            });
+
+            // Prevent XSS in input (already sanitized in addMessage, but also trim)
+            chatInput.addEventListener('input', function() {
+                // Basic sanitization: remove script tags if any pasted
+                this.value = this.value.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
