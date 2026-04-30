@@ -1,0 +1,670 @@
+/* ============================================================
+ * AI Crypto Trading Dashboard - Custom Styles
+ * 
+ * Custom CSS for glassmorphic effects, pulse animation for 
+ * live signals, green/red status colors, and responsive 
+ * sidebar toggle
+ * 
+ * Dependencies: Tailwind CSS (utility classes)
+ * Browser Support: Modern browsers (Chrome, Firefox, Safari, Edge)
+ * ============================================================ */
+
+/* ============================================================
+ * CSS Custom Properties (Design Tokens)
+ * ============================================================ */
+
+:root {
+  /* Glassmorphism Colors */
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.125);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-blur: 12px;
+  
+  /* Status Colors */
+  --signal-buy: #22c55e;      /* Green-500 */
+  --signal-sell: #ef4444;     /* Red-500 */
+  --signal-neutral: #6b7280;  /* Gray-500 */
+  --signal-buy-glow: rgba(34, 197, 94, 0.4);
+  --signal-sell-glow: rgba(239, 68, 68, 0.4);
+  
+  /* Pulse Animation */
+  --pulse-duration: 2s;
+  --pulse-scale: 1.5;
+  
+  /* Sidebar */
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 0px;
+  --sidebar-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+/* ============================================================
+ * Base Styles & Reset
+ * ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  min-height: 100vh;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+ * Glassmorphic Effects
+ * ============================================================ */
+
+/* Base Glass Container */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
+}
+
+/* Glass Card with Hover Effect */
+.glass-card {
+  composes: glass;
+  padding: var(--spacing-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.glass-card:hover::before {
+  left: 100%;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* Glass Input */
+.glass-input {
+  composes: glass;
+  background: rgba(15, 23, 42, 0.5);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: #e2e8f0;
+  outline: none;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.glass-input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.glass-input::placeholder {
+  color: rgba(226, 232, 240, 0.4);
+}
+
+/* Glass Button */
+.glass-btn {
+  composes: glass;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  cursor: pointer;
+  color: #e2e8f0;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.glass-btn:hover {
+  background: rgba(15, 23, 42, 0.85);
+  transform: translateY(-1px);
+}
+
+.glass-btn:active {
+  transform: translateY(0);
+}
+
+.glass-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================================
+ * Pulse Animation for Live Signals
+ * ============================================================ */
+
+@keyframes pulse-signal {
+  0% {
+    box-shadow: 0 0 0 0 var(--signal-buy-glow);
+  }
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes pulse-signal-sell {
+  0% {
+    box-shadow: 0 0 0 0 var(--signal-sell-glow);
+  }
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(var(--pulse-scale));
+    opacity: 0.5;
+  }
+}
+
+/* Live Signal Indicator */
+.signal-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+/* Signal Status Colors */
+.signal-buy {
+  color: var(--signal-buy);
+  animation: pulse-signal var(--pulse-duration) infinite;
+}
+
+.signal-sell {
+  color: var(--signal-sell);
+  animation: pulse-signal-sell var(--pulse-duration) infinite;
+}
+
+.signal-neutral {
+  color: var(--signal-neutral);
+}
+
+/* Signal Dot */
+.signal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.signal-dot.buy {
+  background-color: var(--signal-buy);
+  animation: pulse-dot var(--pulse-duration) infinite;
+}
+
+.signal-dot.sell {
+  background-color: var(--signal-sell);
+  animation: pulse-dot var(--pulse-duration) infinite;
+}
+
+.signal-dot.neutral {
+  background-color: var(--signal-neutral);
+}
+
+/* Signal Badge */
+.signal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.signal-badge.buy {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--signal-buy);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.signal-badge.sell {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--signal-sell);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.signal-badge.neutral {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--signal-neutral);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+/* ============================================================
+ * Sidebar Styles
+ * ============================================================ */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  z-index: 50;
+  transition: transform var(--sidebar-transition);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Sidebar Open State */
+.sidebar.open {
+  transform: translateX(0);
+}
+
+/* Sidebar Closed State */
+.sidebar.closed {
+  transform: translateX(calc(var(--sidebar-width) * -1));
+}
+
+/* Sidebar Overlay for Mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 40;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--sidebar-transition);
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+  position: fixed;
+  top: var(--spacing-md);
+  left: var(--spacing-md);
+  z-index: 60;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #e2e8f0;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  padding: var(--spacing-lg);
+  padding-top: calc(var(--spacing-xl) + 40px); /* Account for toggle button */
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-bottom: var(--spacing-xs);
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.sidebar-nav-item.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  border-left: 3px solid #818cf8;
+}
+
+/* ============================================================
+ * Main Content Area
+ * ============================================================ */
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: var(--spacing-lg);
+  min-height: 100vh;
+  transition: margin-left var(--sidebar-transition);
+}
+
+/* When Sidebar is Closed */
+.main-content.expanded {
+  margin-left: 0;
+}
+
+/* ============================================================
+ * Chat Interface Styles
+ * ============================================================ */
+
+.chat-container {
+  composes: glass;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  scroll-behavior: smooth;
+}
+
+.chat-message {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-message.user {
+  background: rgba(99, 102, 241, 0.15);
+  margin-left: auto;
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.chat-message.ai {
+  background: rgba(15, 23, 42, 0.5);
+  margin-right: auto;
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+.chat-input-container {
+  composes: glass;
+  border-top: 1px solid var(--glass-border);
+  padding: var(--spacing-sm);
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* ============================================================
+ * Signal Card Styles
+ * ============================================================ */
+
+.signal-card {
+  composes: glass-card;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.signal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signal-price {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.signal-change {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.signal-change.positive {
+  color: var(--signal-buy);
+}
+
+.signal-change.negative {
+  color: var(--signal-sell);
+}
+
+/* ============================================================
+ * Loading States & Animations
+ * ============================================================ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+ * Scrollbar Styles
+ * ============================================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================
+ * Responsive Design
+ * ============================================================ */
+
+/* Tablet and below */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(calc(var(--sidebar-width) * -1));
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .main-content.expanded {
+    margin-left: 0;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  :root {
+    --sidebar-width: 100%;
+    --sidebar-blur: 8px;
+  }
+  
+  .main-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .glass-card {
+    padding: var(--spacing-md);
+  }
+  
+  .signal-price {
+    font-size: 1.25rem;
+  }
+  
+  .chat-message {
+    max-width: 90%;
+  }
+  
+  .sidebar-toggle {
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
+  }
+}
+
+/* Dark mode preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glass-bg: rgba(15, 23, 42, 0.85);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+ * Utility Classes
+ * ============================================================ */
+
+/* Text truncation */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Monospace text */
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Focus visible for accessibility */
+.focus-visible:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .sidebar,
+  .sidebar-toggle,
+  .sidebar-overlay {
+    display: none;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .glass {
+    background: none;
+    backdrop-filter: none;
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+}
